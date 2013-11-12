@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Developer workload</title>
+
+<style type="text/css" title="currentStyle">
+			@import "/DataTables-1.9.4/media/css/demo_page.css"; @import "/DataTables-1.9.4/media/css/header.css";
+			@import "/DataTables-1.9.4/media/css/demo_table.css";
+		</style>
+
+<script src="/DataTables-1.9.4/media/js/jquery.js"></script>
+<script src="/DataTables-1.9.4/media/js/jquery.dataTables.js"></script>
+
+<meta http-equiv="refresh" content="3600">
+</head>
+<body>
+
+<script type="text/javascript">
+$.getJSON( "/service/developer_workload", function( data ) {
+	"use strict";
+	var versions = {};
+	
+	
+	$.each( data, function( developer, val ) {
+		$.each( val, function( version, count ) {
+			versions[version] = true;
+		});
+	});
+	
+	var uniq_versions = Object.keys(versions).sort();
+	
+	//table header
+	var trh = $("<tr />");
+	trh.append($("<th />"));
+	
+	$.each(uniq_versions, function(index, version) {
+		var td = $("<th />").text(version);
+		trh.append(td);
+	});
+	$("#stats").append($("<thead />").append(trh));
+	
+	$.each( data, function( developer, info ) {
+		
+		
+		var tr = $("<tr />");
+			tr.append($("<td />").text(developer));
+		$.each(uniq_versions, function(index, version) {
+			var td = $("<td />").text(info[version]);
+			
+			tr.append(td);
+		});
+		$("#stats").append(tr);
+	});
+
+	$(document).ready(function() {
+	    $('#stats').dataTable( {
+	        "bPaginate": false,
+	        "bLengthChange": false,
+	        "bFilter": true,
+	        "bSort": true,
+	        "bInfo": false,
+	        "bAutoWidth": true
+	    });
+	    
+	    $("#loading").remove();
+	} );
+
+});
+</script>
+
+<style media="screen" type="text/css">
+td {
+	border: 1px solid black;
+}
+
+
+</style>
+
+<h1>Developer backlog</h1>
+<div id="demo">
+	<table id="stats" style="border: 1px solid black;">
+	</table>
+
+	<div id="loading">
+	<h1>Loading...</h1>
+	</div>
+</div>
+
+</body>
+</html>

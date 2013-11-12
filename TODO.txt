@@ -1,0 +1,5 @@
+Project_id -> config
+days back -> config
+
+Bug: de first submitted date moet gebruikt worden met status NEW. Last updated date + huidige status ook inserten (niet altijd gelijk)
+Efficienter updaten op basis van recently modified list in Mantis
