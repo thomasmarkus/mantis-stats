@@ -118,12 +118,8 @@ public class DeveloperWorkload {
 								result.get(developer).put(versionString, 0l);
 						
 							result.get(developer).put(versionString, result.get(developer).get(versionString)+1);
-							  
-							if (developer.equals("tkupers")) System.out.println("Open issues for tkuper: " + issue);
 						}
-
 				}
-				
 			}
 		}
 

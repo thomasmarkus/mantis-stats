@@ -37,6 +37,8 @@ public class OpenIssues {
 	
 	//number of days to plot back
 	private final int DAYS_BACK = 60;
+	private final int VERSIONS_BACK = 6;
+
 	
 	public OpenIssues(String username, String password)
 	{
@@ -75,13 +77,12 @@ public class OpenIssues {
 		Map<Integer, TreeMap<DateTime, String>> issue_assigned_to = new HashMap<Integer, TreeMap<DateTime, String>>();
 
 		
-		final int VERSIONS_BACK = 2;
 		List<HtmlOption> recent = Common.getVersions(webClient).subList(2, 2+VERSIONS_BACK);
 
 		DateTime startDate = DateTime.now().minusDays(DAYS_BACK).withHourOfDay(0).withMinuteOfHour(0);
 
 		ImmutableList<String> discardStates = ImmutableList.of("resolved", "closed");
-		HashMap<String, List<Map<String, Long>>> result = new HashMap<String, List<Map<String, Long>>>();
+		Map<String, List<Map<String, Long>>> result = new TreeMap<String, List<Map<String, Long>>>();
 		
 		
 		for(HtmlOption version : recent)
