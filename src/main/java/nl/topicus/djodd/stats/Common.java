@@ -3,18 +3,25 @@ package nl.topicus.djodd.stats;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.Map.Entry;
 
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
+import com.gargoylesoftware.htmlunit.ElementNotFoundException;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
+import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.DomElement;
+import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlInput;
@@ -24,14 +31,29 @@ import com.gargoylesoftware.htmlunit.html.HtmlPasswordInput;
 import com.gargoylesoftware.htmlunit.html.HtmlSelect;
 import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
 import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 public class Common {
 
+	public static ImmutableList<String> discardStates = ImmutableList.of("resolved", "closed", "afgemeld", "afgesloten");
+
+	
 	public static HtmlPage switchToProject(String project, HtmlPage currentPage) throws IOException
 	{
 		HtmlForm form = currentPage.getFormByName("form_set_project");
-		HtmlSubmitInput submit = form.getInputByValue("Switch");
+		
+		HtmlSubmitInput submit;
+		try
+		{
+			submit = form.getInputByValue("Switch");	
+		}
+		catch(ElementNotFoundException e)
+		{
+			submit = form.getInputByValue("Wisselen");
+		}
+		
+		
 		HtmlSelect select = form.getSelectByName("project_id");
 		select.setSelectedAttribute("210", true);
 
@@ -130,7 +152,10 @@ public class Common {
 			for(HtmlElement row : history.getElementsByTagName("tr"))
 			{
 				ArrayList<DomElement> columns = Lists.newArrayList(row.getChildElements());
-				if (columns.size() == 4 && !columns.get(0).getTextContent().contains("Date Modified"))
+				if (columns.size() == 4 && 
+						!columns.get(0).getTextContent().contains("Date Modified") &&
+						!columns.get(0).getTextContent().contains("Gewijzigd op")
+						)
 				{
 					final DateTime timestamp = fmt.parseDateTime(columns.get(0).getTextContent().trim());
 					final String user = columns.get(1).getTextContent().trim();
@@ -153,6 +178,41 @@ public class Common {
 		return result;
 	}
 
+	/**
+	 * Get the release versions, WARNING: only works with certain Mantis accounts
+	 * @param webClient
+	 * @return
+	 * @throws IOException 
+	 * @throws MalformedURLException 
+	 * @throws FailingHttpStatusCodeException 
+	 */
+	
+	public static Map<String, LocalDate> getReleaseDates(WebClient webClient, String project_id) throws FailingHttpStatusCodeException, MalformedURLException, IOException
+	{
+		Map<String, LocalDate> result = new HashMap<String, LocalDate>();
+		HtmlPage page = webClient.getPage("https://bugs.topicus.nl/manage_proj_edit_page.php?project_id="+project_id);
+		DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
+		
+		HtmlAnchor a = page.getAnchorByName("versions");
+		
+		List<HtmlElement> rows = a.getHtmlElementsByTagName("tr");
+		
+		for(HtmlElement row : rows)
+		{
+			List<HtmlElement> cells = row.getHtmlElementsByTagName("td");
+		
+			if (cells.size() == 5 && !cells.get(0).asText().equals("Versie") && !cells.get(0).asText().equals("Version"))
+			{
+				String version = cells.get(0).asText();
+				LocalDate date = formatter.parseLocalDate(cells.get(3).asText().substring(0, 10));
+				result.put(version, date);
+			}
+		}
+
+		return result;
+	}
+	
+	
 	public static List<Integer> getIssues(WebClient webClient, String desiredVersion) throws IOException
 	{
 		System.out.println("Getting issues for version : " + desiredVersion);
@@ -207,6 +267,31 @@ public class Common {
 
 		return webClient;
 	}
+	
+	public static List<HtmlOption> getVersionsReleasedAfter(Map<String, LocalDate> releaseDates, List<HtmlOption> recent, LocalDate date)
+	{
+		List<HtmlOption> filtered_recent = new ArrayList<HtmlOption>();	
+
+		for( Entry<String, LocalDate> version_info : releaseDates.entrySet())
+		{
+			if (version_info.getValue().isAfter(date))
+			{
+				String version = version_info.getKey();
+				for(HtmlOption option : recent)
+				{
+					if (option.asText().equals(version))
+					{
+						filtered_recent.add(option);
+					}
+				}
+			}
+		}
+
+		return filtered_recent;
+	}
+	
+	 
+	
 	
 
 }

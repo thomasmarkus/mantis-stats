@@ -1,5 +1,6 @@
 username: USERNAME
 password: PASWORD
+project_id: NUMERIC_PROJECT_ID
 
 http:
   port: 7070

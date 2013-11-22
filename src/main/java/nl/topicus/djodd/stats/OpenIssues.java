@@ -15,6 +15,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
@@ -33,18 +34,21 @@ public class OpenIssues {
 	private static final int CACHE_DURATION = 1;
 	private String username;
 	private String password;
+	private String project_id;
+
 	private Cache<String, Map<String, List<Map<String, Long>>>> requestCache;
 	
 	//number of days to plot back
 	private final int DAYS_BACK = 60;
-	private final int VERSIONS_BACK = 6;
+	private final int VERSIONS_BACK = 20;
 
 	
-	public OpenIssues(String username, String password)
+	public OpenIssues(String username, String password, String project_id)
 	{
 		this.username = username;
 		this.password = password;
-	
+		this.project_id = project_id;
+		
 		this.requestCache = CacheBuilder.newBuilder()
 			       .maximumSize(1000)
 			       .expireAfterWrite(CACHE_DURATION, TimeUnit.HOURS)
@@ -55,7 +59,7 @@ public class OpenIssues {
 	@GET
     @Timed
     @CacheControl(maxAge = CACHE_DURATION, maxAgeUnit = TimeUnit.HOURS)
-	public Map<String, List<Map<String, Long>>> doit() throws FailingHttpStatusCodeException, MalformedURLException, IOException
+	public synchronized Map<String, List<Map<String, Long>>> doit() throws FailingHttpStatusCodeException, MalformedURLException, IOException
 	{
 		if (requestCache.getIfPresent("open_issues") != null)
 		{
@@ -65,7 +69,7 @@ public class OpenIssues {
 		final WebClient webClient = Common.getWebClient();
 
 		HtmlPage initialPage = Common.login(webClient, this.username, this.password);
-		Common.switchToProject("210", initialPage);
+		Common.switchToProject(project_id, initialPage);
 
 		// Issues in versies over tijd
 		Map<Integer, TreeMap<DateTime, String>> issue_version = new HashMap<Integer, TreeMap<DateTime, String>>();
@@ -78,14 +82,16 @@ public class OpenIssues {
 
 		
 		List<HtmlOption> recent = Common.getVersions(webClient).subList(2, 2+VERSIONS_BACK);
-
+		Map<String, LocalDate> releaseDates = Common.getReleaseDates(webClient, project_id);
+		List<HtmlOption> filtered_recent = Common.getVersionsReleasedAfter(releaseDates, recent, LocalDate.now());
+		
+		
 		DateTime startDate = DateTime.now().minusDays(DAYS_BACK).withHourOfDay(0).withMinuteOfHour(0);
 
-		ImmutableList<String> discardStates = ImmutableList.of("resolved", "closed");
 		Map<String, List<Map<String, Long>>> result = new TreeMap<String, List<Map<String, Long>>>();
 		
 		
-		for(HtmlOption version : recent)
+		for(HtmlOption version : filtered_recent)
 		{
 			List<Integer> issues = Common.getIssues(webClient, version.asText());
 
@@ -111,7 +117,7 @@ public class OpenIssues {
 						{
 							Entry<DateTime, String> state_at_the_time = issue_status.get(issue).floorEntry(date);
 							
-							if (state_at_the_time == null || !discardStates.contains(state_at_the_time.getValue()))
+							if (state_at_the_time == null || !Common.discardStates.contains(state_at_the_time.getValue()))
 							{
 								issues_count++;	
 							}

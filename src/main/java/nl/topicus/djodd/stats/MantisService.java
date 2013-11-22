@@ -20,10 +20,11 @@ public class MantisService extends Service<MantisConfiguration> {
 	
 		final String username = configuration.getUsername();
 	    final String password = configuration.getPassword();
-	    env.addResource(new OpenIssues(username, password));
-	    env.addResource(new DeveloperWorkload(username, password));
-
-		
+	    final String project_id = configuration.getProject_id();
+	    
+	    env.addResource(new OpenIssues(username, password, project_id));
+	    env.addResource(new DeveloperWorkload(username, password, project_id));
+	    env.addResource(new OpenClosedVersion(username, password, project_id));
 	}
 
 	public static void main(String[] args) throws Exception {

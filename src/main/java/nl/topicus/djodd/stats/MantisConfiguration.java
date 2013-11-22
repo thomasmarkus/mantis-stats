@@ -16,6 +16,11 @@ public class MantisConfiguration extends Configuration {
     @JsonProperty
     private String password;
 
+	@NotEmpty
+    @JsonProperty
+    private String project_id;
+
+    
     public String getUsername() {
         return username;
     }
@@ -23,4 +28,9 @@ public class MantisConfiguration extends Configuration {
     public String getPassword() {
         return password;
     }
+
+    public String getProject_id() {
+        return project_id;
+    }
+
 }

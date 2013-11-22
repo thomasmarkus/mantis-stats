@@ -15,6 +15,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
@@ -43,17 +44,19 @@ public class DeveloperWorkload {
 	private static final int CACHE_DURATION = 1;
 	private String username;
 	private String password;
+	private String project_id;
 	private Cache<String, Map<String, Map<String, Long>>> requestCache;
 
 	//number of days to plot back (here we are only interested in the current state of affairs)
 	public static final int DAYS_BACK = 1;
-	public static final int VERSIONS_BACK = 5;
+	public static final int VERSIONS_BACK = 20;
 
 	
-	public DeveloperWorkload(String username, String password)
+	public DeveloperWorkload(String username, String password, String project_id)
 	{
 		this.username = username;
 		this.password = password;
+		this.project_id = project_id;
 
 		this.requestCache = CacheBuilder.newBuilder()
 				.maximumSize(1000)
@@ -65,7 +68,7 @@ public class DeveloperWorkload {
 	@GET
 	@Timed
 	@CacheControl(maxAge = CACHE_DURATION, maxAgeUnit = TimeUnit.HOURS)
-	public Map<String, Map<String, Long>> doit() throws FailingHttpStatusCodeException, MalformedURLException, IOException
+	public synchronized Map<String, Map<String, Long>> doit() throws FailingHttpStatusCodeException, MalformedURLException, IOException
 	{
 		if (requestCache.getIfPresent("developer_workload") != null)
 		{
@@ -75,7 +78,7 @@ public class DeveloperWorkload {
 		WebClient webClient = Common.getWebClient();
 
 		HtmlPage initialPage = Common.login(webClient, this.username, this.password);
-		Common.switchToProject("210", initialPage);
+		Common.switchToProject(project_id, initialPage);
 
 		// Issues in versies over tijd
 		Map<Integer, TreeMap<DateTime, String>> issue_version = new HashMap<Integer, TreeMap<DateTime, String>>();
@@ -87,11 +90,12 @@ public class DeveloperWorkload {
 		Map<Integer, TreeMap<DateTime, String>> issue_assigned_to = new HashMap<Integer, TreeMap<DateTime, String>>();
 
 		List<HtmlOption> recent = Common.getVersions(webClient).subList(2, 2+VERSIONS_BACK);
-		ImmutableList<String> discardStates = ImmutableList.of("resolved", "closed");
 		HashMap<String, Map<String, Long>> result = new HashMap<String, Map<String, Long>>();
 
+		Map<String, LocalDate> releaseDates = Common.getReleaseDates(webClient, project_id);
+		List<HtmlOption> filtered_recent = Common.getVersionsReleasedAfter(releaseDates, recent, LocalDate.now());
 		
-		for(HtmlOption version : recent)
+		for(HtmlOption version : filtered_recent)
 		{
 			List<Integer> issues = Common.getIssues(webClient, version.asText());
 
@@ -112,7 +116,7 @@ public class DeveloperWorkload {
 						Entry<DateTime, String> entry = issue_status.get(issue).floorEntry(date);
 						String versionString = version.asText();
 						
-						if (entry == null || !discardStates.contains(entry.getValue()))
+						if (entry == null || !Common.discardStates.contains(entry.getValue()))
 						{
 							if (!result.get(developer).containsKey(version.asText()))
 								result.get(developer).put(versionString, 0l);
