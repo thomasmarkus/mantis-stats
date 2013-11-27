@@ -38,6 +38,10 @@ public class Common {
 
 	public static ImmutableList<String> discardStates = ImmutableList.of("resolved", "closed", "afgemeld", "afgesloten");
 
+	public static ImmutableList<String> resolvedStates = ImmutableList.of("resolved", "afgemeld");
+	
+	public static ImmutableList<String> closedStates = ImmutableList.of("closed", "afgesloten");
+	
 	
 	public static HtmlPage switchToProject(String project, HtmlPage currentPage) throws IOException
 	{
