@@ -3,7 +3,6 @@ package nl.topicus.djodd.stats;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +17,6 @@ import org.joda.time.format.DateTimeFormatter;
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.ElementNotFoundException;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
-import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.DomElement;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
@@ -36,11 +34,11 @@ import com.google.common.collect.Lists;
 
 public class Common {
 
-	public static ImmutableList<String> discardStates = ImmutableList.of("resolved", "closed", "afgemeld", "afgesloten");
+	public static final ImmutableList<String> discardStates = ImmutableList.of("resolved", "closed", "afgemeld", "afgesloten");
 
-	public static ImmutableList<String> resolvedStates = ImmutableList.of("resolved", "afgemeld");
+	public static final ImmutableList<String> resolvedStates = ImmutableList.of("resolved", "afgemeld");
 	
-	public static ImmutableList<String> closedStates = ImmutableList.of("closed", "afgesloten");
+	public static final ImmutableList<String> closedStates = ImmutableList.of("closed", "afgesloten");
 	
 	
 	public static HtmlPage switchToProject(String project, HtmlPage currentPage) throws IOException
@@ -92,8 +90,12 @@ public class Common {
 		return versions;
 	}
 
-	protected static void extractIssueStates(final WebClient webClient, List<Integer> issues, Map<Integer, TreeMap<DateTime, String>> issue_version, Map<Integer, TreeMap<DateTime, String>> issue_status, Map<Integer, TreeMap<DateTime, String>> issue_assigned_to)
-			throws IOException, MalformedURLException {
+	protected static void extractIssueStates(final WebClient webClient, List<Integer> issues, 
+											Map<Integer, TreeMap<DateTime, String>> issue_version, 
+											Map<Integer, TreeMap<DateTime, String>> issue_status, 
+											Map<Integer, TreeMap<DateTime, String>> issue_assigned_to)
+	
+														throws IOException, MalformedURLException {
 
 		int index = 1;
 		for(Integer issue : issues)
@@ -129,7 +131,7 @@ public class Common {
 
 		DomElement info_table = page.getElementsByTagName("table").get(2);
 		DateTime date = fmt.parseDateTime(info_table.getElementsByTagName("tr").get(2).getElementsByTagName("td").get(4).asText()); //first submitted
-		String status = info_table.getElementsByTagName("tr").get(7).getElementsByTagName("td").get(1).asText();
+		//String status = info_table.getElementsByTagName("tr").get(7).getElementsByTagName("td").get(1).asText();
 		String version = info_table.getElementsByTagName("tr").get(10).getElementsByTagName("td").get(1).asText().replaceAll("\\[.*\\] ", "");
 		String assigned_to = info_table.getElementsByTagName("tr").get(5).getElementsByTagName("td").get(1).asText().trim();
 		
@@ -162,7 +164,7 @@ public class Common {
 						)
 				{
 					final DateTime timestamp = fmt.parseDateTime(columns.get(0).getTextContent().trim());
-					final String user = columns.get(1).getTextContent().trim();
+					//final String user = columns.get(1).getTextContent().trim();
 					final String type = columns.get(2).getTextContent().trim();
 					final String value = columns.get(3).getTextContent().trim().replaceAll(".*=\\>", "").trim();
 

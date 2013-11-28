@@ -23,7 +23,6 @@ import com.gargoylesoftware.htmlunit.html.HtmlOption;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.ImmutableList;
 import com.yammer.dropwizard.jersey.caching.CacheControl;
 import com.yammer.metrics.annotation.Timed;
 
@@ -39,8 +38,8 @@ public class OpenIssues {
 	private Cache<String, Map<String, List<Map<String, Long>>>> requestCache;
 	
 	//number of days to plot back
-	private final int DAYS_BACK = 60;
-	private final int VERSIONS_BACK = 20;
+	private static final int DAYS_BACK = 60;
+	private static final int VERSIONS_BACK = 20;
 
 	
 	public OpenIssues(String username, String password, String project_id)
