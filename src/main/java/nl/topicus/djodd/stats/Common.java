@@ -280,7 +280,7 @@ public class Common {
 
 		for( Entry<String, LocalDate> version_info : releaseDates.entrySet())
 		{
-			if (version_info.getValue().isAfter(date))
+			if (version_info.getValue().plusDays(1).isAfter(date)) //fix voor isAfterOrEqual
 			{
 				String version = version_info.getKey();
 				for(HtmlOption option : recent)
