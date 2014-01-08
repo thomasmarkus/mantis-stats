@@ -62,9 +62,9 @@ public class Common {
 		return submit.click();
 	}
 
-	public static HtmlPage login(WebClient webClient, String username, String password) throws FailingHttpStatusCodeException, MalformedURLException, IOException
+	public static HtmlPage login(WebClient webClient, String host, String username, String password) throws FailingHttpStatusCodeException, MalformedURLException, IOException
 	{
-		final HtmlPage page = webClient.getPage("https://bugs.topicus.nl");
+		final HtmlPage page = webClient.getPage(host);
 		final HtmlForm form = page.getFormByName("login_form");
 
 		final HtmlSubmitInput button = form.getInputByValue("Login");
@@ -79,9 +79,9 @@ public class Common {
 		return button.click();
 	}
 	
-	public static List<HtmlOption> getVersions(WebClient webClient) throws FailingHttpStatusCodeException, MalformedURLException, IOException
+	public static List<HtmlOption> getVersions(WebClient webClient, String host) throws FailingHttpStatusCodeException, MalformedURLException, IOException
 	{
-		HtmlPage info_page = webClient.getPage("https://bugs.topicus.nl/view_filters_page.php?for_screen=1&target_field=target_version[]");
+		HtmlPage info_page = webClient.getPage(host + "/view_filters_page.php?for_screen=1&target_field=target_version[]");
 		HtmlForm filters = info_page.getFormByName("filters");
 
 		HtmlSelect target_version = filters.getSelectByName("target_version[]");
@@ -90,7 +90,7 @@ public class Common {
 		return versions;
 	}
 
-	protected static void extractIssueStates(final WebClient webClient, List<Integer> issues, 
+	protected static void extractIssueStates(final WebClient webClient, String host, List<Integer> issues, 
 											Map<Integer, TreeMap<DateTime, String>> issue_version, 
 											Map<Integer, TreeMap<DateTime, String>> issue_status, 
 											Map<Integer, TreeMap<DateTime, String>> issue_assigned_to)
@@ -100,7 +100,7 @@ public class Common {
 		int index = 1;
 		for(Integer issue : issues)
 		{
-			HtmlPage page = getIssueHistoryPage(issue, webClient);
+			HtmlPage page = getIssueHistoryPage(issue, webClient, host);
 
 			issue_version.put(issue, getIssueHistory(issue, page, "Target Version"));
 			issue_status.put(issue, getIssueHistory(issue, page, "Status"));
@@ -113,11 +113,11 @@ public class Common {
 	}
 
 
-	public static HtmlPage getIssueHistoryPage(int id, WebClient web) throws FailingHttpStatusCodeException, MalformedURLException, IOException
+	public static HtmlPage getIssueHistoryPage(int id, WebClient web, String host) throws FailingHttpStatusCodeException, MalformedURLException, IOException
 	{
 		System.out.println("Getting issues history for: " + id);
 
-		HtmlPage page = web.getPage("https://bugs.topicus.nl/view.php?id="+id);
+		HtmlPage page = web.getPage(host+"/view.php?id="+id);
 
 		return page;
 	}
@@ -193,10 +193,10 @@ public class Common {
 	 * @throws FailingHttpStatusCodeException 
 	 */
 	
-	public static Map<String, LocalDate> getReleaseDates(WebClient webClient, String project_id) throws FailingHttpStatusCodeException, MalformedURLException, IOException
+	public static Map<String, LocalDate> getReleaseDates(WebClient webClient, String host, String project_id) throws FailingHttpStatusCodeException, MalformedURLException, IOException
 	{
 		Map<String, LocalDate> result = new HashMap<String, LocalDate>();
-		HtmlPage page = webClient.getPage("https://bugs.topicus.nl/manage_proj_edit_page.php?project_id="+project_id);
+		HtmlPage page = webClient.getPage(host+"/manage_proj_edit_page.php?project_id="+project_id);
 		DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
 		
 		HtmlAnchor a = page.getAnchorByName("versions");
@@ -219,11 +219,11 @@ public class Common {
 	}
 	
 	
-	public static List<Integer> getIssues(WebClient webClient, String desiredVersion) throws IOException
+	public static List<Integer> getIssues(WebClient webClient, String host, String desiredVersion) throws IOException
 	{
 		System.out.println("Getting issues for version : " + desiredVersion);
 
-		HtmlPage info_page = webClient.getPage("https://bugs.topicus.nl/view_filters_page.php?for_screen=1&target_field=target_version[]");
+		HtmlPage info_page = webClient.getPage(host+"/view_filters_page.php?for_screen=1&target_field=target_version[]");
 		HtmlForm filters = info_page.getFormByName("filters");
 		HtmlSelect target_version = filters.getSelectByName("target_version[]");
 

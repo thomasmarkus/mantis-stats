@@ -33,6 +33,7 @@ import com.yammer.metrics.annotation.Timed;
 public class OpenClosedVersion {
 
 	private static final int CACHE_DURATION = 1;
+	private String host;
 	private String username;
 	private String password;
 	private String project_id;
@@ -42,8 +43,9 @@ public class OpenClosedVersion {
 	//number of days to plot back
 	private static final int VERSIONS_BACK = 20;
 	
-	public OpenClosedVersion(String username, String password, String project_id)
+	public OpenClosedVersion(String host, String username, String password, String project_id)
 	{
+		this.host = host;
 		this.username = username;
 		this.password = password;
 		this.project_id = project_id;
@@ -67,13 +69,13 @@ public class OpenClosedVersion {
 		
 		final WebClient webClient = Common.getWebClient();
 		
-		HtmlPage initialPage = Common.login(webClient, this.username, this.password);
+		HtmlPage initialPage = Common.login(webClient, this.host, this.username, this.password);
 		Common.switchToProject(project_id, initialPage);
 		
-		List<HtmlOption> recent = Common.getVersions(webClient).subList(2, 2+VERSIONS_BACK);
+		List<HtmlOption> recent = Common.getVersions(webClient, this.host).subList(2, 2+VERSIONS_BACK);
 		List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
 		
-		Map<String, LocalDate> releaseDates = Common.getReleaseDates(webClient, project_id);
+		Map<String, LocalDate> releaseDates = Common.getReleaseDates(webClient, this.host, project_id);
 		DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
 		List<HtmlOption> filtered_recent = Common.getVersionsReleasedAfter(releaseDates, recent, LocalDate.now());
 		
@@ -90,8 +92,8 @@ public class OpenClosedVersion {
 			// 'Assigned to' van issue over tijd
 			Map<Integer, TreeMap<DateTime, String>> issue_assigned_to = new HashMap<Integer, TreeMap<DateTime, String>>();
 			
-			List<Integer> issues = Common.getIssues(webClient, version.asText());
-			Common.extractIssueStates(webClient, issues, issue_version, issue_status, issue_assigned_to);
+			List<Integer> issues = Common.getIssues(webClient, this.host, version.asText());
+			Common.extractIssueStates(webClient, this.host, issues, issue_version, issue_status, issue_assigned_to);
 			
 			HashMap<String, Object> data = new HashMap<String, Object>();
 			

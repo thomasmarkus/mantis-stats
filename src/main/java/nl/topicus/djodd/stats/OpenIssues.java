@@ -31,6 +31,7 @@ import com.yammer.metrics.annotation.Timed;
 public class OpenIssues {
 
 	private static final int CACHE_DURATION = 1;
+	private String host;
 	private String username;
 	private String password;
 	private String project_id;
@@ -42,8 +43,9 @@ public class OpenIssues {
 	private static final int VERSIONS_BACK = 20;
 
 	
-	public OpenIssues(String username, String password, String project_id)
+	public OpenIssues(String host, String username, String password, String project_id)
 	{
+		this.host = host;
 		this.username = username;
 		this.password = password;
 		this.project_id = project_id;
@@ -67,7 +69,7 @@ public class OpenIssues {
 		
 		final WebClient webClient = Common.getWebClient();
 
-		HtmlPage initialPage = Common.login(webClient, this.username, this.password);
+		HtmlPage initialPage = Common.login(webClient, this.host, this.username, this.password);
 		Common.switchToProject(project_id, initialPage);
 
 		// Issues in versies over tijd
@@ -80,8 +82,8 @@ public class OpenIssues {
 		Map<Integer, TreeMap<DateTime, String>> issue_assigned_to = new HashMap<Integer, TreeMap<DateTime, String>>();
 
 		
-		List<HtmlOption> recent = Common.getVersions(webClient).subList(2, 2+VERSIONS_BACK);
-		Map<String, LocalDate> releaseDates = Common.getReleaseDates(webClient, project_id);
+		List<HtmlOption> recent = Common.getVersions(webClient, this.host).subList(2, 2+VERSIONS_BACK);
+		Map<String, LocalDate> releaseDates = Common.getReleaseDates(webClient, this.host, project_id);
 		List<HtmlOption> filtered_recent = Common.getVersionsReleasedAfter(releaseDates, recent, LocalDate.now());
 		
 		
@@ -92,9 +94,9 @@ public class OpenIssues {
 		
 		for(HtmlOption version : filtered_recent)
 		{
-			List<Integer> issues = Common.getIssues(webClient, version.asText());
+			List<Integer> issues = Common.getIssues(webClient, this.host, version.asText());
 
-			Common.extractIssueStates(webClient, issues, issue_version, issue_status, issue_assigned_to);
+			Common.extractIssueStates(webClient, this.host, issues, issue_version, issue_status, issue_assigned_to);
 
 			result.put(version.asText(), new ArrayList<Map<String, Long>>());
 			

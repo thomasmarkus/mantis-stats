@@ -18,13 +18,14 @@ public class MantisService extends Service<MantisConfiguration> {
 	public void run(MantisConfiguration configuration, Environment env)
 			throws Exception {
 	
+		final String host = configuration.getHost();
 		final String username = configuration.getUsername();
 	    final String password = configuration.getPassword();
 	    final String project_id = configuration.getProject_id();
 	    
-	    env.addResource(new OpenIssues(username, password, project_id));
-	    env.addResource(new DeveloperWorkload(username, password, project_id));
-	    env.addResource(new OpenClosedVersion(username, password, project_id));
+	    env.addResource(new OpenIssues(host, username, password, project_id));
+	    env.addResource(new DeveloperWorkload(host, username, password, project_id));
+	    env.addResource(new OpenClosedVersion(host, username, password, project_id));
 	}
 
 	public static void main(String[] args) throws Exception {

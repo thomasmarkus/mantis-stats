@@ -20,7 +20,14 @@ public class MantisConfiguration extends Configuration {
     @JsonProperty
     private String project_id;
 
-    
+	@NotEmpty
+    @JsonProperty
+    private String host;
+
+    public String getHost() {
+        return host;
+    }
+	
     public String getUsername() {
         return username;
     }

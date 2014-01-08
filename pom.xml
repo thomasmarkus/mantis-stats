@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>nl.topicus.onderwijs.djodd</groupId>
   <artifactId>mantis-stats</artifactId>
-  <version>0.0.2</version>
+  <version>0.0.3</version>
  
  
  
@@ -79,9 +79,9 @@
   		<version>2.3</version>
   	</dependency>
   	<dependency>
-  		<groupId>com.googlecode.dirkraft</groupId>
+  		<groupId>com.google.guava</groupId>
   		<artifactId>guava</artifactId>
-  		<version>14.0-SNAPSHOT</version>
+  		<version>15.0</version>
   	</dependency>
   	<dependency>
   		<groupId>org.codehaus.jackson</groupId>

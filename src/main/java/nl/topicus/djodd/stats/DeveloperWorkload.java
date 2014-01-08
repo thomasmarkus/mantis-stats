@@ -11,29 +11,17 @@ import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
-import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.DomElement;
-import com.gargoylesoftware.htmlunit.html.HtmlElement;
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlOption;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlPasswordInput;
-import com.gargoylesoftware.htmlunit.html.HtmlSelect;
-import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
-import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.yammer.dropwizard.jersey.caching.CacheControl;
 import com.yammer.metrics.annotation.Timed;
 
@@ -42,6 +30,7 @@ import com.yammer.metrics.annotation.Timed;
 public class DeveloperWorkload {
 
 	private static final int CACHE_DURATION = 1;
+	private String host;
 	private String username;
 	private String password;
 	private String project_id;
@@ -52,8 +41,9 @@ public class DeveloperWorkload {
 	public static final int VERSIONS_BACK = 20;
 
 	
-	public DeveloperWorkload(String username, String password, String project_id)
+	public DeveloperWorkload(String host, String username, String password, String project_id)
 	{
+		this.host = host;
 		this.username = username;
 		this.password = password;
 		this.project_id = project_id;
@@ -77,7 +67,7 @@ public class DeveloperWorkload {
 
 		WebClient webClient = Common.getWebClient();
 
-		HtmlPage initialPage = Common.login(webClient, this.username, this.password);
+		HtmlPage initialPage = Common.login(webClient, this.host, this.username, this.password);
 		Common.switchToProject(project_id, initialPage);
 
 		// Issues in versies over tijd
@@ -89,17 +79,17 @@ public class DeveloperWorkload {
 		// 'Assigned to' van issue over tijd
 		Map<Integer, TreeMap<DateTime, String>> issue_assigned_to = new HashMap<Integer, TreeMap<DateTime, String>>();
 
-		List<HtmlOption> recent = Common.getVersions(webClient).subList(2, 2+VERSIONS_BACK);
+		List<HtmlOption> recent = Common.getVersions(webClient, this.host).subList(2, 2+VERSIONS_BACK);
 		HashMap<String, Map<String, Long>> result = new HashMap<String, Map<String, Long>>();
 
-		Map<String, LocalDate> releaseDates = Common.getReleaseDates(webClient, project_id);
+		Map<String, LocalDate> releaseDates = Common.getReleaseDates(webClient, this.host, project_id);
 		List<HtmlOption> filtered_recent = Common.getVersionsReleasedAfter(releaseDates, recent, LocalDate.now());
 		
 		for(HtmlOption version : filtered_recent)
 		{
-			List<Integer> issues = Common.getIssues(webClient, version.asText());
+			List<Integer> issues = Common.getIssues(webClient, this.host, version.asText());
 
-			Common.extractIssueStates(webClient, issues, issue_version, issue_status, issue_assigned_to);
+			Common.extractIssueStates(webClient, this.host, issues, issue_version, issue_status, issue_assigned_to);
 
 			final DateTime date = DateTime.now();
 			for(Integer issue : issues)
