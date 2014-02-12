@@ -37,25 +37,25 @@ public class Common {
 	public static final ImmutableList<String> discardStates = ImmutableList.of("resolved", "closed", "afgemeld", "afgesloten");
 
 	public static final ImmutableList<String> resolvedStates = ImmutableList.of("resolved", "afgemeld");
-	
+
 	public static final ImmutableList<String> closedStates = ImmutableList.of("closed", "afgesloten");
-	
-	
+
+
 	public static HtmlPage switchToProject(String project, HtmlPage currentPage) throws IOException
 	{
 		HtmlForm form = currentPage.getFormByName("form_set_project");
-		
+
 		HtmlSubmitInput submit;
 		try
 		{
-			submit = form.getInputByValue("Switch");	
+			submit = form.getInputByValue("Switch");
 		}
 		catch(ElementNotFoundException e)
 		{
 			submit = form.getInputByValue("Wisselen");
 		}
-		
-		
+
+
 		HtmlSelect select = form.getSelectByName("project_id");
 		select.setSelectedAttribute("210", true);
 
@@ -64,6 +64,8 @@ public class Common {
 
 	public static HtmlPage login(WebClient webClient, String host, String username, String password) throws FailingHttpStatusCodeException, MalformedURLException, IOException
 	{
+		System.out.println("Attempting to login...");
+
 		final HtmlPage page = webClient.getPage(host);
 		final HtmlForm form = page.getFormByName("login_form");
 
@@ -78,7 +80,7 @@ public class Common {
 		// Now submit the form by clicking the button and get back the second page.
 		return button.click();
 	}
-	
+
 	public static List<HtmlOption> getVersions(WebClient webClient, String host) throws FailingHttpStatusCodeException, MalformedURLException, IOException
 	{
 		HtmlPage info_page = webClient.getPage(host + "/view_filters_page.php?for_screen=1&target_field=target_version[]");
@@ -90,11 +92,11 @@ public class Common {
 		return versions;
 	}
 
-	protected static void extractIssueStates(final WebClient webClient, String host, List<Integer> issues, 
-											Map<Integer, TreeMap<DateTime, String>> issue_version, 
-											Map<Integer, TreeMap<DateTime, String>> issue_status, 
+	protected static void extractIssueStates(final WebClient webClient, String host, List<Integer> issues,
+											Map<Integer, TreeMap<DateTime, String>> issue_version,
+											Map<Integer, TreeMap<DateTime, String>> issue_status,
 											Map<Integer, TreeMap<DateTime, String>> issue_assigned_to)
-	
+
 														throws IOException, MalformedURLException {
 
 		int index = 1;
@@ -105,9 +107,9 @@ public class Common {
 			issue_version.put(issue, getIssueHistory(issue, page, "Target Version"));
 			issue_status.put(issue, getIssueHistory(issue, page, "Status"));
 			issue_assigned_to.put(issue, getIssueHistory(issue, page, "Assigned To"));
-		
+
 			index++;
-			
+
 			System.out.println(String.format("Progress %f", ((float) index / issues.size()) * 100));
 		}
 	}
@@ -125,7 +127,7 @@ public class Common {
 	public static TreeMap<DateTime, String> getIssueHistory(int id, HtmlPage page, String desiredType) throws FailingHttpStatusCodeException, MalformedURLException, IOException
 	{
 		TreeMap<DateTime, String> result = new TreeMap<DateTime, String>();
-		
+
 		//parse 'date submitted' en 'target version', 'Status' fields
 		final DateTimeFormatter fmt = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm");
 
@@ -134,7 +136,7 @@ public class Common {
 		//String status = info_table.getElementsByTagName("tr").get(7).getElementsByTagName("td").get(1).asText();
 		String version = info_table.getElementsByTagName("tr").get(10).getElementsByTagName("td").get(1).asText().replaceAll("\\[.*\\] ", "");
 		String assigned_to = info_table.getElementsByTagName("tr").get(5).getElementsByTagName("td").get(1).asText().trim();
-		
+
 		if (desiredType.equals("Status"))
 		{
 			result.put(date, "New");
@@ -147,8 +149,8 @@ public class Common {
 		{
 			result.put(date, assigned_to);
 		}
-		
-		
+
+
 		//loop de history tabel door
 		DomElement history = page.getElementById("history_open");
 
@@ -158,7 +160,7 @@ public class Common {
 			for(HtmlElement row : history.getElementsByTagName("tr"))
 			{
 				ArrayList<DomElement> columns = Lists.newArrayList(row.getChildElements());
-				if (columns.size() == 4 && 
+				if (columns.size() == 4 &&
 						!columns.get(0).getTextContent().contains("Date Modified") &&
 						!columns.get(0).getTextContent().contains("Gewijzigd op")
 						)
@@ -188,25 +190,25 @@ public class Common {
 	 * Get the release versions, WARNING: only works with certain Mantis accounts
 	 * @param webClient
 	 * @return
-	 * @throws IOException 
-	 * @throws MalformedURLException 
-	 * @throws FailingHttpStatusCodeException 
+	 * @throws IOException
+	 * @throws MalformedURLException
+	 * @throws FailingHttpStatusCodeException
 	 */
-	
+
 	public static Map<String, LocalDate> getReleaseDates(WebClient webClient, String host, String project_id) throws FailingHttpStatusCodeException, MalformedURLException, IOException
 	{
 		Map<String, LocalDate> result = new HashMap<String, LocalDate>();
 		HtmlPage page = webClient.getPage(host+"/manage_proj_edit_page.php?project_id="+project_id);
 		DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
-		
+
 		HtmlAnchor a = page.getAnchorByName("versions");
-		
+
 		List<HtmlElement> rows = a.getHtmlElementsByTagName("tr");
-		
+
 		for(HtmlElement row : rows)
 		{
 			List<HtmlElement> cells = row.getHtmlElementsByTagName("td");
-		
+
 			if (cells.size() == 5 && !cells.get(0).asText().equals("Versie") && !cells.get(0).asText().equals("Version"))
 			{
 				String version = cells.get(0).asText();
@@ -217,8 +219,8 @@ public class Common {
 
 		return result;
 	}
-	
-	
+
+
 	public static List<Integer> getIssues(WebClient webClient, String host, String desiredVersion) throws IOException
 	{
 		System.out.println("Getting issues for version : " + desiredVersion);
@@ -244,6 +246,7 @@ public class Common {
 		filters.getSelectByName("custom_field_78[]").setSelectedAttribute("0", true); //knownbug
 		filters.getSelectByName("custom_field_40[]").setSelectedAttribute("0", true); //school
 		filters.getSelectByName("custom_field_47[]").setSelectedAttribute("0", true); //SOM omgeving
+		filters.getSelectByName("custom_field_118[]").setSelectedAttribute("0", true); //Doelgroep
 		filters.getSelectByName("hide_status[]").setSelectedAttribute("-2", true);
 
 		HtmlPage issuesPage = submit.click();
@@ -273,10 +276,10 @@ public class Common {
 
 		return webClient;
 	}
-	
+
 	public static List<HtmlOption> getVersionsReleasedAfter(Map<String, LocalDate> releaseDates, List<HtmlOption> recent, LocalDate date)
 	{
-		List<HtmlOption> filtered_recent = new ArrayList<HtmlOption>();	
+		List<HtmlOption> filtered_recent = new ArrayList<HtmlOption>();
 
 		for( Entry<String, LocalDate> version_info : releaseDates.entrySet())
 		{
@@ -295,9 +298,9 @@ public class Common {
 
 		return filtered_recent;
 	}
-	
-	 
-	
-	
+
+
+
+
 
 }
