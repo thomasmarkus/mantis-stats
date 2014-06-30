@@ -1,3 +1,4 @@
+host: https://bugs.topicus.nl
 username: USERNAME
 password: PASWORD
 project_id: NUMERIC_PROJECT_ID
